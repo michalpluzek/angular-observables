@@ -1,4 +1,5 @@
 import { Component } from "@angular/core";
+import { Observable } from "rxjs/Observable";
 
 @Component({
   selector: "app-root",
@@ -6,6 +7,7 @@ import { Component } from "@angular/core";
     <p>Result: {{ result }}</p>
     <p>Time: {{ time }}</p>
     <p>Error: {{ error }}</p>
+    <counter-app></counter-app>
   `,
 })
 export class AppComponent {
@@ -16,20 +18,24 @@ export class AppComponent {
   constructor() {
     const startTime = Date.now();
     this.add(2, 3)
-      .then((result) => this.add(result, 4))
-      .then((result) => this.add(result, 10))
-      .then((result) => (this.result = result))
-      .catch((error) => (this.error = error))
-      .then(() => (this.time = Date.now() - startTime));
+      .mergeMap((result) => this.add(result, 4))
+      .mergeMap((result) => this.add(result, 10))
+      .finally(() => (this.time = Date.now() - startTime))
+      .subscribe(
+        (result) => (this.result = result),
+        (error) => (this.error = error)
+      );
   }
 
-  add(x, y): Promise<number> {
-    return new Promise((resolve, reject) => {
+  add(x, y): Observable<number> {
+    return Observable.create((observer) => {
       setTimeout(() => {
         const result = x + y;
 
-        if (result >= 0) resolve(result);
-        else reject(`Nieprawidłowa wartość: ${result}`);
+        if (result >= 0) {
+          observer.next(result);
+          observer.complete();
+        } else observer.error(`Nieprawidłowa wartość: ${result}`);
       }, 1000);
     });
   }
