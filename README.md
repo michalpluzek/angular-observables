@@ -1,1 +1,1 @@
-# Angular2_Promises
+# Angular2_Observables
